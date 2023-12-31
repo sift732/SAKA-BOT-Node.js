@@ -2,13 +2,28 @@ const { Client, Intents, MessageEmbed } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { readdirSync } = require('fs');
+const express = require('express');
+const path = require('path');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(port, () => {
+  console.log(`サーバーが起動しました。ポート番号：${port}`);
+});
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
 client.commands = new Map();
 
 const commands = [];
-const commandFolders = ["bot"];
+const commandFolders = ["bot","user"];
 
 client.on('ready', async () => {
   console.log(`ログインしたアカウント：${client.user.tag}`);
@@ -51,7 +66,7 @@ client.on('interactionCreate', async (interaction) => {
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(chalk.red(error));
+    console.error(error);
     const errorEmbed = new MessageEmbed()
       .setTitle('エラー')
       .setDescription('コマンドの実行中にエラーが発生しました。')
