@@ -101,5 +101,6 @@ function createOtherEmbed() {
   return new MessageEmbed()
     .setColor('#ff0000')
     .setTitle('その他')
-    .setDescription('サポートサーバーに参加してください');
+    .setDescription('サポートサーバーに参加してください\n[こちらから参加可能](https://discord.gg/wAk8AsAGE6)');
+
 }
