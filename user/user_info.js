@@ -7,15 +7,15 @@ module.exports = {
     .setName('user_info')
     .setDescription('ユーザーの情報を表示します')
     .addUserOption(option =>
-      option.setName('user')
+      option.setName('ユーザー')
         .setDescription('情報を表示するユーザー')
         .setRequired(false)
     ),
 
   async execute(interaction) {
-    const targetUser = interaction.options.getUser('user') || interaction.user;
+    const targetUser = interaction.options.getUser('ユーザー') || interaction.user;
 
-    const joinDate = targetUser.joinedAt ? format(targetUser.joinedAt, "yyyy年MM月dd日 HH:mm:ss") : '不明';
+    const joinDate = targetUser.joinedAt ? format(targetUser.joinedAt, "yyyy年MM月dd日") ("HH:mm:ss") : '不明';
           
     const registrationDate = format(targetUser.createdAt, "yyyy年MM月dd日 HH:mm:ss");
 

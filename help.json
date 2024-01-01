@@ -1,0 +1,19 @@
+{
+  "commands": [
+    {
+      "name": "</help:1191248793685987328>",
+      "description": "コマンドのヘルプを送信",
+      "options": "オプションなし"
+    },
+    {
+      "name": "</bot_info:1190672100978081802>",
+      "description": "botの情報を表示します",
+      "options": "オプションなし"
+    },
+    {
+      "name": "</user_info:1191017903726805022>",
+      "description": "ヘルプを表示",
+      "options": "ユーザー でユーザーを指定"
+    }
+  ]
+}
