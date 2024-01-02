@@ -4,6 +4,8 @@ const { Routes } = require('discord-api-types/v9');
 const { readdirSync } = require('fs');
 const express = require('express');
 const path = require('path');
+const Lavalink = require('lavalink');
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,7 +29,6 @@ const commandFolders = ["bot","user"];
 
 client.on('ready', async () => {
   console.log(`ログインしたアカウント：${client.user.tag}`);
-
   const guilds = client.guilds.cache.map(guild => guild.id);
 
   for (const folder of commandFolders) {
@@ -72,7 +73,7 @@ client.on('interactionCreate', async (interaction) => {
       .setDescription('コマンドの実行中にエラーが発生しました。')
       .setColor('RED')
       .addFields({ name: 'エラー内容', value: `\`\`\`js\n${error.message || '不明なエラー'}\n\`\`\`` });
-    await interaction.reply({ embeds: [errorEmbed]});
+    await interaction.reply({ embeds: [errorEmbed] });
   }
 });
 
