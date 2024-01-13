@@ -4,8 +4,7 @@ const { Routes } = require('discord-api-types/v9');
 const { readdirSync } = require('fs');
 const express = require('express');
 const path = require('path');
-const Lavalink = require('lavalink');
-
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,11 +20,12 @@ app.listen(port, () => {
 });
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const db = new sqlite3.Database('./blacklist.db');
 
 client.commands = new Map();
 
 const commands = [];
-const commandFolders = ["bot","user"];
+const commandFolders = ["bot", "user", "CREATOR"];
 
 client.on('ready', async () => {
   console.log(`ログインしたアカウント：${client.user.tag}`);
@@ -62,19 +62,37 @@ client.on('ready', async () => {
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand()) return;
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    const errorEmbed = new MessageEmbed()
-      .setTitle('エラー')
-      .setDescription('コマンドの実行中にエラーが発生しました。')
-      .setColor('RED')
-      .addFields({ name: 'エラー内容', value: `\`\`\`js\n${error.message || '不明なエラー'}\n\`\`\`` });
-    await interaction.reply({ embeds: [errorEmbed] });
-  }
+
+  const serverId = interaction.guildId;
+  db.get('SELECT * FROM blacklist WHERE serverId = ?', [serverId], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      return;
+    }
+
+    if (row) {
+      const embed = new MessageEmbed()
+        .setColor('RED')
+        .setAuthor('実行できません','https://b63bcd29-12c1-431c-a8ea-ba18d718ddb2-00-1yjzgqvntiwjd.pike.replit.dev/img/no.gif')
+        .setDescription('このサーバーはブラックリストに登録されています。');
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    const command = client.commands.get(interaction.commandName);
+    if (command) {
+      try {
+        command.execute(interaction);
+      } catch (error) {
+        console.error(error);
+        const errorEmbed = new MessageEmbed()
+          .setTitle('エラー')
+          .setDescription('コマンドの実行中にエラーが発生しました。')
+          .setColor('RED')
+          .addFields({ name: 'エラー内容', value: `\`\`\`js\n${error.message || '不明なエラー'}\n\`\`\`` });
+        interaction.reply({ embeds: [errorEmbed] });
+      }
+    }
+  });
 });
 
 const token = process.env.TOKEN;
