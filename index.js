@@ -85,7 +85,7 @@ client.on('interactionCreate', async (interaction) => {
       const embed = new MessageEmbed()
         .setColor('RED')
         .setAuthor('実行できません', 'https://b63bcd29-12c1-431c-a8ea-ba18d718ddb2-00-1yjzgqvntiwjd.pike.replit.dev/img/no.gif')
-        .setDescription('このサーバーはブラックリストに登録されているためコマンドを実行できません')
+        .setDescription('このサーバーはブラックリストに登録されています')
         .setFooter('サポートが必要な場合は、サポートサーバーに参加してください。');
 
       return interaction.reply({ embeds: [embed], components: [new MessageActionRow().addComponents(supportButton)] });
@@ -106,7 +106,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new MessageEmbed()
           .setColor('RED')
           .setAuthor('実行できません', 'https://b63bcd29-12c1-431c-a8ea-ba18d718ddb2-00-1yjzgqvntiwjd.pike.replit.dev/img/no.gif')
-          .setDescription('あなたはブラックリストに登録されているためコマンドを実行できません')
+          .setDescription('ブラックリストに登録されています')
           .setFooter('サポートが必要な場合は、サポートサーバーに参加してください。');
 
         return interaction.reply({ embeds: [embed], components: [new MessageActionRow().addComponents(supportButton)] });
