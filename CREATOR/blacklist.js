@@ -22,7 +22,7 @@ module.exports = {
     .setName('adblack')
     .setDescription('サーバーをブラックリストに追加します。')
     .addStringOption(option =>
-      option.setName('server_id')
+      option.setName('登録するサーバー')
         .setDescription('ブラックリストに追加するサーバーのID。')
         .setRequired(true)
     ),
@@ -32,7 +32,7 @@ module.exports = {
       return interaction.reply('このコマンドは制作者専用です。');
     }
 
-    const serverId = interaction.options.getString('server_id');
+    const serverId = interaction.options.getString('登録するサーバー');
 
     if (blacklistedServers.includes(serverId)) {
       return interaction.reply('このサーバーは既にブラックリストに登録されています。');
