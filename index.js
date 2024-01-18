@@ -1,5 +1,5 @@
-const { Client, Intents, MessageEmbed } = require('discord.js');
-const { MessageActionRow, MessageButton } = require('discord.js');
+const { Client, Intents, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+const { Player } = require('discord-player');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { readdirSync } = require('fs');
@@ -20,16 +20,27 @@ app.listen(port, () => {
   console.log(`サーバーが起動しました。ポート番号：${port}`);
 });
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] });
 
 const db = new sqlite3.Database('./blacklist.db');
-
 db.run('CREATE TABLE IF NOT EXISTS user_blacklist (id INTEGER PRIMARY KEY AUTOINCREMENT, userId TEXT NOT NULL UNIQUE)');
+db.run('CREATE TABLE IF NOT EXISTS blacklist (id INTEGER PRIMARY KEY AUTOINCREMENT, serverId TEXT NOT NULL UNIQUE)');
 
 client.commands = new Map();
 
 const commands = [];
-const commandFolders = ["bot","user","CREATOR"];
+const commandFolders = ["bot", "user", "CREATOR"];
+
+client.on('voiceStateUpdate', (oldState, newState) => {
+    player.voiceStateUpdate(oldState, newState);
+});
+
+client.on('guildCreate', (guild) => {
+  if (blacklist.servers.includes(guild.id)) {
+    guild.leave();
+    console.log(`サーバー名：${guild.name} (${guild.id}) 　ブラックリストに登録されているためサーバーから退出しました`);
+  }
+});
 
 client.on('ready', async () => {
   console.log(`ログインしたアカウント：${client.user.tag}`);
@@ -40,9 +51,10 @@ client.on('ready', async () => {
 
     for (const file of commandFiles) {
       const command = require(`./${folder}/${file}`);
-      commands.push(command.data.toJSON());
-
-      client.commands.set(command.data.name, command);
+      if (command.data) {
+        commands.push(command.data.toJSON());
+        client.commands.set(command.data.name, command);
+      }
     }
   }
 
@@ -86,7 +98,7 @@ client.on('interactionCreate', async (interaction) => {
         .setColor('RED')
         .setAuthor('実行できません', 'https://b63bcd29-12c1-431c-a8ea-ba18d718ddb2-00-1yjzgqvntiwjd.pike.replit.dev/img/no.gif')
         .setDescription('このサーバーはブラックリストに登録されています')
-        .setFooter('サポートが必要な場合は、サポートサーバーに参加してください。');
+        .setFooter('サポートが必要な場合は、サポートサーバーに参加してください.');
 
       return interaction.reply({ embeds: [embed], components: [new MessageActionRow().addComponents(supportButton)] });
     }
@@ -107,30 +119,55 @@ client.on('interactionCreate', async (interaction) => {
           .setColor('RED')
           .setAuthor('実行できません', 'https://b63bcd29-12c1-431c-a8ea-ba18d718ddb2-00-1yjzgqvntiwjd.pike.replit.dev/img/no.gif')
           .setDescription('ブラックリストに登録されています')
-          .setFooter('サポートが必要な場合は、サポートサーバーに参加してください。');
+          .setFooter('サポートが必要な場合は、サポートサーバーに参加してください.');
 
         return interaction.reply({ embeds: [embed], components: [new MessageActionRow().addComponents(supportButton)] });
       }
 
       const command = client.commands.get(interaction.commandName);
       if (command) {
-        try {
-          command.execute(interaction);
-        } catch (error) {
-          console.error(error);
-          const supportButton = new MessageButton()
-            .setStyle('LINK')
-            .setLabel('サポートサーバーに参加')
-            .setURL('https://discord.gg/wAk8AsAGE6');
+        if (command.data.options) {
+          // Handle subcommands
+          const subcommand = interaction.options.getSubcommand();
+          if (command[subcommand] && command[subcommand].execute) {
+            try {
+              command[subcommand].execute(interaction);
+            } catch (error) {
+              console.error(error);
+              const supportButton = new MessageButton()
+                .setStyle('LINK')
+                .setLabel('サポートサーバーに参加')
+                .setURL('https://discord.gg/wAk8AsAGE6');
 
-          const errorEmbed = new MessageEmbed()
-            .setTitle('エラー')
-            .setDescription('コマンドの実行中にエラーが発生しました。')
-            .setColor('RED')
-            .addFields({ name: 'エラー内容', value: `\`\`\`js\n${error.message || '不明なエラー'}\n\`\`\`` })
-            .setFooter('サポートが必要な場合は、サポートサーバーに参加してください。');
+              const errorEmbed = new MessageEmbed()
+                .setTitle('エラー')
+                .setDescription('コマンドの実行中にエラーが発生しました。')
+                .setColor('RED')
+                .addFields({ name: 'エラー内容', value: `\`\`\`js\n${error.message || '不明なエラー'}\n\`\`\`` })
+                .setFooter('サポートが必要な場合は、サポートサーバーに参加してください.');
 
-          interaction.reply({ embeds: [errorEmbed], components: [new MessageActionRow().addComponents(supportButton)] });
+              interaction.reply({ embeds: [errorEmbed], components: [new MessageActionRow().addComponents(supportButton)] });
+            }
+          }
+        } else {
+          try {
+            command.execute(interaction);
+          } catch (error) {
+            console.error(error);
+            const supportButton = new MessageButton()
+              .setStyle('LINK')
+              .setLabel('サポートサーバーに参加')
+              .setURL('https://discord.gg/wAk8AsAGE6');
+
+            const errorEmbed = new MessageEmbed()
+              .setTitle('エラー')
+              .setDescription('コマンドの実行中にエラーが発生しました。')
+              .setColor('RED')
+              .addFields({ name: 'エラー内容', value: `\`\`\`js\n${error.message || '不明なエラー'}\n\`\`\`` })
+              .setFooter('サポートが必要な場合は、サポートサーバーに参加してください.');
+
+            interaction.reply({ embeds: [errorEmbed], components: [new MessageActionRow().addComponents(supportButton)] });
+          }
         }
       }
     });
